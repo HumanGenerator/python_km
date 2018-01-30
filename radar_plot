@@ -1,0 +1,76 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+import matplotlib.lines as mlines
+import matplotlib.patches as mpathces
+import matplotlib
+
+
+def radar_plot(scores, *args, **kw):
+    # 生成测试数据
+    num = len(scores)
+    labels = [scores[i][0] for i in range(num)]
+    data = [scores[i][1] for i in range(num)]
+    theta = np.linspace(0, 2*np.pi, num, endpoint=False)
+    theta += np.pi/2
+    theta[theta>2*np.pi] = theta[theta>2*np.pi] - 2*np.pi
+
+    # 数据预处理
+    data = np.concatenate((data, [data[0]]))
+    theta = np.concatenate((theta, [theta[0]]))
+
+    # 画图方式
+    plt.subplot(111, polar=True)
+    plt.title("雷达图", fontproperties=myfont1)
+
+    # 设置"theta grid"/"radar grid"
+    plt.thetagrids(theta*(180/np.pi), labels=labels, fontproperties=myfont2)
+    plt.rgrids(np.arange(20, 100, 20), labels=np.arange(20, 100, 20), angle=90)
+    plt.ylim(0, 100)
+    
+    # 分别获取plot()，fill()所接受的**kw
+    kw_plot = []
+    kw_fill = []
+    kw1 = {}
+    kw2 = {}
+    xdir = dir(mlines.Line2D)
+    for i in range(len(xdir)):
+        if xdir[i][0:4] == 'set_':
+            kw_plot.append(xdir[i][4:])
+            
+    xdir = dir(mpathces.Polygon)
+    for i in range(len(xdir)):
+        if xdir[i][0:4] == 'set_':
+            kw_fill.append(xdir[i][4:])
+            
+    for key in kw.keys():
+        if key in kw_plot:
+            kw1[key] = kw[key]
+        elif key in kw_fill:
+            kw2[key] = kw[key]
+        elif key == 'fill_alpha':
+            kw2['alpha'] = kw[key]
+        else:
+            raise AttributeError('Unknown property %s' % key)
+
+    # 画雷达图,并填充雷达图内部区域
+    plt.plot(theta, data, *args, **kw1)
+    plt.fill(theta, data, **kw2)
+    
+    # 图形显示
+    plt.show()
+    return
+# radar_plot()
+
+
+# 设置字体，解决中文乱码
+myfont1 = fm.FontProperties(fname="/Library/Fonts/Songti.ttc", size=12)
+myfont2 = fm.FontProperties(fname="/Library/Fonts/Songti.ttc", size=10)
+matplotlib.rcParams["axes.unicode_minus"] = False
+if __name__ == '__main__':
+    scores = {'Physical Education ': 78, 'Economic Law': 96,
+              'Military Theory': 66, 'Electronics': 90, 
+              'Political Economics': 76, 'Analogue Circuit':93, 'College English': 72}
+    # 设置排序方式：升序或降序；按值或按键。
+    scores = sorted(scores.items(), key = lambda x: x[0], reverse=0)
+    radar_plot(scores, 'y--o', fill_alpha=0.5, facecolor='y')
